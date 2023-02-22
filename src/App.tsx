@@ -2,45 +2,55 @@ import styles from "./App.module.css";
 import Robot from "./components/Robot";
 import logo from "./assets/images/logo.svg";
 import ShoppingCart from "./components/ShoppingCart";
-import { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import React from "react";
 
-interface State {
-  robotGallery: any;
-}
+const App: React.FC = () => {
+  const [robotGallery, setRobotGallery] = useState<any>();
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>();
 
-interface Props {}
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          "https://jsonplaceholder.typicode.com/users"
+        );
+        const data = await response.json();
+        setRobotGallery(data);
+        setError("");
+      } catch (e) {
+        if (e instanceof Error) {
+          setError(e.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
-class App extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      robotGallery: [],
-    };
-  }
+  return (
+    <div className={styles.app}>
+      <div className={styles.appHeader}>
+        <img src={logo} className={styles.appLogo} alt="logo" />
+        <h1>罗伯特机器人</h1>
+      </div>
+      <ShoppingCart />
 
-  componentDidMount() {
-    fetch("https://jsonplaceholder.typicode.com/users")
-      .then((response) => response.json())
-      .then((data) => this.setState({ robotGallery: data }));
-  }
-
-  render(): ReactNode {
-    return (
-      <div className={styles.app}>
-        <div className={styles.appHeader}>
-          <img src={logo} className={styles.appLogo} alt="logo" />
-          <h1>罗伯特机器人</h1>
-        </div>
-        <ShoppingCart />
+      {error && <h1>{error}</h1>}
+      {!loading ? (
         <div className={styles.robotList}>
-          {this.state.robotGallery.map((r) => (
-            <Robot id={r.id} email={r.email} name={r.name} />
+          {robotGallery?.map((robot) => (
+            <Robot id={robot.id} email={robot.email} name={robot.name} />
           ))}
         </div>
-      </div>
-    );
-  }
-}
+      ) : (
+        <h1>loading.....</h1>
+      )}
+    </div>
+  );
+};
 
 export default App;
